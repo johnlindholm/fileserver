@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -66,12 +67,12 @@ public class StorageServiceImpl implements StorageService {
     }
 
     @Override
-    public Data storeData(MultipartFile multipartFile) {
-        File file = usbStorageService.store(multipartFile);
+    public Data storeData(MultipartFile multipartFile, Date createdDate) {
+        File file = usbStorageService.store(multipartFile, createdDate);
         Data data = fileTransformer.process(file);
         data.setName(multipartFile.getOriginalFilename());
         data.setMediaType(multipartFile.getContentType());
-        data.setSize((int) multipartFile.getSize());
+        data.setSize(multipartFile.getSize());
         data = dataRepository.save(data);
         data.setApiPath("/api/v1/files/" + data.getId());
         data = dataRepository.save(data);
@@ -79,12 +80,12 @@ public class StorageServiceImpl implements StorageService {
     }
 
     @Override
-    public Video storeVideo(MultipartFile multipartFile) {
-        File file = usbStorageService.store(multipartFile);
+    public Video storeVideo(MultipartFile multipartFile, Date createdDate) {
+        File file = usbStorageService.store(multipartFile, createdDate);
         Video video = (Video) fileTransformer.process(file);
         video.setName(multipartFile.getOriginalFilename());
         video.setMediaType(multipartFile.getContentType());
-        video.setSize((int) multipartFile.getSize());
+        video.setSize(multipartFile.getSize());
         video = videoRepository.save(video);
         video.setApiPath("/api/v1/files/videos/" + video.getId());
         video = videoRepository.save(video);
@@ -92,12 +93,12 @@ public class StorageServiceImpl implements StorageService {
     }
 
     @Override
-    public Image storeImage(MultipartFile multipartFile) {
-        File file = usbStorageService.store(multipartFile);
+    public Image storeImage(MultipartFile multipartFile, Date createdDate) {
+        File file = usbStorageService.store(multipartFile, createdDate);
         Image image = (Image) fileTransformer.process(file);
         image.setName(multipartFile.getOriginalFilename());
         image.setMediaType(multipartFile.getContentType());
-        image.setSize((int) multipartFile.getSize());
+        image.setSize(multipartFile.getSize());
         image = imageRepository.save(image);
         image.setApiPath("/api/v1/files/images/" + image.getId());
         image = imageRepository.save(image);

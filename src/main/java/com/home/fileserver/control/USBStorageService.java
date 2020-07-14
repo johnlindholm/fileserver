@@ -1,17 +1,24 @@
 package com.home.fileserver.control;
 
 import com.home.fileserver.exception.USBStorageException;
-import org.apache.commons.io.FileUtils;
+import org.apache.tomcat.util.http.fileupload.FileUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.annotation.PostConstruct;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.attribute.FileTime;
+import java.util.Date;
+import javax.annotation.PostConstruct;
 
 @Service
 public class USBStorageService {
+
+    private static Logger logger = LoggerFactory.getLogger(USBStorageService.class);
 
     @Value("${storeage.usb.mountpoint}")
     private File usbMountpoint;
@@ -42,23 +49,19 @@ public class USBStorageService {
                 throw new USBStorageException(e.getMessage(), e);
             }
         }
+        logger.debug("Storage directory is: {}", storageDirectory.getAbsolutePath());
     }
 
-    public File store(MultipartFile multipartFile) {
+    public File store(MultipartFile multipartFile, Date createdDate) {
         try {
             File file = new File(storageDirectory, multipartFile.getOriginalFilename());
-            while (file.exists()) {
-                int i = 1;
-                String filename = multipartFile.getOriginalFilename();
-                if (filename.indexOf(".") > 0) {
-                    filename = filename.substring(0, filename.indexOf(".")) + i +
-                            filename.substring(filename.indexOf("."));
-                } else {
-                    filename = filename + i;
-                }
-                file = new File(storageDirectory, filename);
+            if (file.exists()) {
+                logger.debug("File already exists: " + file.getAbsolutePath());
+            } else {
+                multipartFile.transferTo(file);
+                Files.setLastModifiedTime(file.toPath(), FileTime.fromMillis(createdDate.getTime()));
+                logger.debug("Storing file: {}", file.getAbsolutePath());
             }
-            multipartFile.transferTo(file);
             return file;
         } catch (IOException e) {
             throw new USBStorageException(e.getMessage(), e);

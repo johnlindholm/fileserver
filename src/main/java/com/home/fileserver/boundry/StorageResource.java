@@ -12,15 +12,24 @@ import com.home.fileserver.response.PageResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.Date;
 import java.util.List;
 
 @RestController
@@ -34,16 +43,19 @@ public class StorageResource {
 
     @PostMapping("/api/v1/files")
     public ResponseEntity uploadFile(@RequestHeader("ClientID") String clientId,
-                                     @RequestParam("file") MultipartFile file) {
+                                     @RequestParam("file") MultipartFile file,
+                                     @RequestParam(value = "createdDate")
+                                     @DateTimeFormat(pattern = "yyyy-MM-dd hh:mm:ss")
+                                             Date createdDate) {
         validateClientId(clientId);
         MediaType mediaType = MediaType.parseMediaType(file.getContentType());
         Data data;
         if (isImage(mediaType)) {
-            data = storageService.storeImage(file);
+            data = storageService.storeImage(file, createdDate);
         } else if (isVideo(mediaType)) {
-            data = storageService.storeVideo(file);
+            data = storageService.storeVideo(file, createdDate);
         } else {
-            data = storageService.storeData(file);
+            data = storageService.storeData(file, createdDate);
         }
         URI link = null;
         try {
@@ -58,7 +70,8 @@ public class StorageResource {
     }
 
     @PatchMapping("/api/v1/files/data/{dataId}")
-    public ResponseEntity<Data> patchDataMetadata(@RequestHeader("ClientID") String clientId, @PathVariable String dataId,
+    public ResponseEntity<Data> patchDataMetadata(@RequestHeader("ClientID") String clientId,
+                                                  @PathVariable String dataId,
                                                   @RequestBody Data data) {
         validateClientId(clientId);
         data = storageService.updateData(dataId, data);
@@ -93,8 +106,8 @@ public class StorageResource {
 
     @GetMapping("/api/v1/files/images")
     public ResponseEntity<PageResponse<Image>> getAllImages(@RequestHeader("ClientID") String clientId,
-                                                         @RequestParam(required = false) Integer limit,
-                                                         @RequestParam(required = false) Integer pageNumber) {
+                                                            @RequestParam(required = false) Integer limit,
+                                                            @RequestParam(required = false) Integer pageNumber) {
         validateClientId(clientId);
         Page<Image> page = storageService.getAllImages(pageNumber != null ? pageNumber : 0, limit != null ? limit : 10);
         return ResponseEntity.ok(new PageResponse<>(page, "/api/v1/files/images"));
@@ -102,8 +115,8 @@ public class StorageResource {
 
     @GetMapping("/api/v1/files/videos")
     public ResponseEntity<PageResponse<Video>> getAllVideos(@RequestHeader("ClientID") String clientId,
-                                                         @RequestParam(required = false) Integer limit,
-                                                         @RequestParam(required = false) Integer pageNumber) {
+                                                            @RequestParam(required = false) Integer limit,
+                                                            @RequestParam(required = false) Integer pageNumber) {
         validateClientId(clientId);
         Page<Video> page = storageService.getAllVideos(pageNumber != null ? pageNumber : 0, limit != null ? limit : 10);
         return ResponseEntity.ok(new PageResponse<>(page, "/api/v1/files/videos"));

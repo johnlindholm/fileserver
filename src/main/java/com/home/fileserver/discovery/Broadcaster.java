@@ -43,9 +43,11 @@ public class Broadcaster {
     @Scheduled(fixedDelay = 5000)
     public void broadcast() {
         try {
-            byte[] buffer = getBroadcastMessage().getBytes("UTF-8");
+            String message = getBroadcastMessage();
+            byte[] buffer = message.getBytes("UTF-8");
             DatagramPacket packet = new DatagramPacket(buffer, buffer.length, broadcastAddress, port);
             socket.send(packet);
+//            logger.debug("Sending broadcast message: {}", message);
         } catch (Exception e) {
             logger.debug("Unable to send broadcast message. Error: " + e.getMessage(), e);
             try {

@@ -6,16 +6,17 @@ import com.home.fileserver.domain.Video;
 import org.springframework.data.domain.Page;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
 public interface StorageService {
 
-    Data storeData(MultipartFile multipartFile);
+    Data storeData(MultipartFile multipartFile, Date createdDate);
 
-    Video storeVideo(MultipartFile multipartFile);
+    Video storeVideo(MultipartFile multipartFile, Date createdDate);
 
-    Image storeImage(MultipartFile multipartFile);
+    Image storeImage(MultipartFile multipartFile, Date createdDate);
 
     Optional<Video> getVideo(String id);
 

@@ -24,7 +24,7 @@ public class Data {
 
     private String description;
 
-    private Integer size;
+    private Long size;
 
     private String mediaType;
 
@@ -82,11 +82,11 @@ public class Data {
         this.name = name;
     }
 
-    public Integer getSize() {
+    public Long getSize() {
         return size;
     }
 
-    public void setSize(Integer size) {
+    public void setSize(Long size) {
         this.size = size;
     }
 

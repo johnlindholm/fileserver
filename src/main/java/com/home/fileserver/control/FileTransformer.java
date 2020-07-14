@@ -4,8 +4,6 @@ import com.home.fileserver.domain.Data;
 import com.home.fileserver.domain.Image;
 import com.home.fileserver.domain.Video;
 import com.home.fileserver.exception.InitException;
-import com.home.fileserver.exception.StorageFileIOException;
-import org.apache.commons.io.IOUtils;
 import org.apache.tika.config.TikaConfig;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
@@ -15,12 +13,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.util.DigestUtils;
 
-import javax.annotation.PostConstruct;
-import java.io.ByteArrayInputStream;
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Date;
+import javax.annotation.PostConstruct;
 
 @Component
 public class FileTransformer {
@@ -37,22 +35,13 @@ public class FileTransformer {
         }
     }
 
-    public MediaType getMediaType(File file, byte[] bytes) throws IOException {
-        Metadata metadata = new Metadata();
-        metadata.set(Metadata.RESOURCE_NAME_KEY, file.getName());
-        return mediaTypeDetector.getDetector().detect(new ByteArrayInputStream(bytes), metadata);
-    }
-
     public Data process(File file) {
-        byte[] bytes;
-        try {
-            bytes = IOUtils.toByteArray(new FileInputStream(file));
-        } catch (IOException e) {
-            throw new StorageFileIOException("Unable to read file bytes", e);
-        }
         MediaType mediaType = null;
         try {
-            mediaType = getMediaType(file, bytes);
+            Metadata metadata = new Metadata();
+            metadata.set(Metadata.RESOURCE_NAME_KEY, file.getName());
+            BufferedInputStream is = new BufferedInputStream(new FileInputStream(file));
+            mediaType = mediaTypeDetector.getDetector().detect(is, metadata);
         } catch (IOException e) {
             logger.warn("Unable to parse media type for file: {}", file);
         }
@@ -69,12 +58,17 @@ public class FileTransformer {
         } else {
             data = new Data();
         }
-        String md5 = DigestUtils.md5DigestAsHex(bytes);
+        String md5 = null;
+        try {
+            md5 = DigestUtils.md5DigestAsHex(new FileInputStream(file));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         data.setInternalStoragePath(file.getAbsolutePath());
         data.setMd5(md5);
         data.setName(file.getName());
         data.setCreated(new Date());
-        data.setSize(bytes.length);
+        data.setSize(file.length());
         return data;
     }
 }
